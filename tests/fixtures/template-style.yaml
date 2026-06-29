@@ -1,0 +1,26 @@
+meta:
+  name: template-demo
+  version: 1
+
+defaults:
+  font_name: Times New Roman
+  font_size: 12
+
+elements:
+  heading1:
+    template_style: Heading 1
+    font_size: 18
+    bold: true
+  paragraph:
+    template_style: Normal
+    font_size: 12
+  ordered_list:
+    template_style: List Number
+  unordered_list:
+    template_style: List Bullet
+  quote:
+    template_style: Quote
+  table:
+    template_style: Table Grid
+  code_block:
+    template_style: Quote

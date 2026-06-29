@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "docubridge"
+version = "0.2.0"
+description = "Document bridge utilities"
+requires-python = ">=3.12"
+dependencies = [
+  "typer",
+  "pydantic",
+  "ruamel.yaml",
+  "markdown-it-py",
+  "python-docx",
+  "openpyxl",
+  "python-pptx",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[project.scripts]
+docubridge = "docubridge.cli:app"
+
+[tool.setuptools.package-data]
+docubridge = ["builtin_styles/*.yaml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

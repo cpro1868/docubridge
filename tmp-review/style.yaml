@@ -1,0 +1,15 @@
+meta:
+  name: test
+  version: 1
+
+defaults:
+  font_name: Times New Roman
+  font_size: 12
+
+elements:
+  heading2:
+    based_on: Normal
+    font_size: 16
+  paragraph:
+    based_on: Normal
+    font_size: 12

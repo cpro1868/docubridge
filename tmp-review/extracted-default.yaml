@@ -1,0 +1,161 @@
+meta:
+  name: 1、布洛夫生死线
+  source: testdata/1、布洛夫生死线.docx
+  version: 1
+defaults:
+  font_size: 11.0
+  space_after_pt: 8.0
+  line_spacing: 1.1583333333333334
+elements:
+  heading1:
+    font_size: 18.0
+    bold: true
+    font_east_asia: 黑体
+    first_line_indent_pt: 0.0
+    space_before_pt: 4.0
+    space_after_pt: 4.0
+    template_style: Heading 1
+  heading2:
+    font_size: 18.0
+    bold: true
+    font_east_asia: 楷体
+    first_line_indent_pt: 0.0
+    space_before_pt: 8.0
+    space_after_pt: 4.0
+    template_style: Heading 2
+  heading3:
+    font_size: 16.0
+    space_before_pt: 8.0
+    space_after_pt: 4.0
+    template_style: Heading 3
+  heading4:
+    space_before_pt: 4.0
+    space_after_pt: 2.0
+    template_style: Heading 4
+  heading5:
+    font_size: 12.0
+    space_before_pt: 4.0
+    space_after_pt: 2.0
+    template_style: Heading 5
+  heading6:
+    bold: true
+    space_before_pt: 2.0
+    space_after_pt: 0.0
+    template_style: Heading 6
+  paragraph:
+    font_name: Times New Roman
+    font_ascii: Times New Roman
+    font_hansi: Times New Roman
+    font_size: 14.0
+    font_east_asia: 仿宋
+    first_line_indent_pt: 10.0
+    line_spacing_pt: 22.0
+    template_style: Normal
+  quote:
+    italic: true
+    space_before_pt: 8.0
+    alignment: center
+    template_style: Quote
+multilevel_list: {}
+document: {}
+assets: {}
+compat:
+  extracted_styles:
+    Date:
+      left_indent_pt: 5.0
+    Default Paragraph Font: {}
+    Footer:
+      font_size: 9.0
+      line_spacing_pt: 12.0
+    Header:
+      font_size: 9.0
+      alignment: center
+      line_spacing_pt: 12.0
+    Heading 7:
+      bold: true
+      space_before_pt: 2.0
+      space_after_pt: 0.0
+    Heading 8:
+      space_after_pt: 0.0
+    Heading 9:
+      space_after_pt: 0.0
+    Hyperlink: {}
+    Intense Emphasis:
+      italic: true
+    Intense Quote:
+      italic: true
+      left_indent_pt: 43.2
+      right_indent_pt: 43.2
+      space_before_pt: 18.0
+      space_after_pt: 18.0
+      alignment: center
+    Intense Reference:
+      bold: true
+    List Paragraph:
+      left_indent_pt: 36.0
+    No List: {}
+    Normal (Web):
+      font_size: 12.0
+      font_cs: Times New Roman
+    Normal Table: {}
+    Subtitle:
+      first_line_indent_pt: 10.0
+      alignment: center
+    Title:
+      font_size: 28.0
+      space_after_pt: 4.0
+      alignment: center
+      line_spacing: 1.0
+    Unresolved Mention: {}
+    副标题 字符:
+      font_size: 14.0
+    引用 字符:
+      italic: true
+    日期 字符:
+      font_name: Times New Roman
+      font_ascii: Times New Roman
+      font_hansi: Times New Roman
+      font_size: 14.0
+      font_east_asia: 仿宋
+    明显引用 字符:
+      italic: true
+    标题 1 字符:
+      font_name: Times New Roman
+      font_ascii: Times New Roman
+      font_hansi: Times New Roman
+      font_size: 18.0
+      bold: true
+      font_east_asia: 黑体
+    标题 2 字符:
+      font_name: Times New Roman
+      font_ascii: Times New Roman
+      font_hansi: Times New Roman
+      font_size: 18.0
+      bold: true
+      font_east_asia: 楷体
+    标题 3 字符:
+      font_size: 16.0
+    标题 4 字符:
+      font_size: 14.0
+    标题 5 字符:
+      font_size: 12.0
+    标题 6 字符:
+      bold: true
+    标题 7 字符:
+      bold: true
+    标题 8 字符: {}
+    标题 9 字符: {}
+    标题 字符:
+      font_size: 28.0
+    页眉 字符:
+      font_name: Times New Roman
+      font_ascii: Times New Roman
+      font_hansi: Times New Roman
+      font_size: 9.0
+      font_east_asia: 仿宋
+    页脚 字符:
+      font_name: Times New Roman
+      font_ascii: Times New Roman
+      font_hansi: Times New Roman
+      font_size: 9.0
+      font_east_asia: 仿宋

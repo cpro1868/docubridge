@@ -1,0 +1,21 @@
+meta:
+  name: academic
+  version: 1
+
+defaults:
+  font_ascii: Times New Roman
+  font_east_asia: 宋体
+  font_size: 12
+  line_spacing: 1.0
+
+elements:
+  heading1:
+    template_style: Heading 1
+    font_size: 18
+    bold: true
+    line_spacing: 1.0
+  paragraph:
+    template_style: Normal
+    font_size: 12
+    line_spacing: 1.0
+    first_line_indent_pt: 0

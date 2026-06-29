@@ -1,0 +1,21 @@
+meta:
+  name: academic
+  version: 1
+
+defaults:
+  font_name: Times New Roman
+  font_size: 12
+
+elements:
+  heading1:
+    based_on: Normal
+    font_size: 18
+    bold: true
+  paragraph:
+    based_on: Normal
+    font_size: 12
+
+document:
+  toc:
+    enabled: true
+    depth: 3
