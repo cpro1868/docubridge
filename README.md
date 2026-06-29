@@ -4,6 +4,8 @@
 
 > *Because you shouldn't have to manually reformat documents when AI can do it for you.*
 
+|📄 [English](README.md) | [中文](README_CN.md) |
+
 ---
 
 ## What is this thing?
