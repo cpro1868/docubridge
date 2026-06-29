@@ -6,7 +6,8 @@ from docubridge.core.diagnostics import Diagnostic, Severity
 
 
 def test_package_version_is_exposed():
-    assert __version__ == "0.1.0"
+    # Keep this assertion in sync with pyproject.toml and src/docubridge/__init__.py
+    assert __version__ == "0.3.1"
 
 
 def test_diagnostic_to_dict_contains_expected_fields() -> None:

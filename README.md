@@ -45,7 +45,7 @@ Integrate document conversion into your scripts, CI/CD pipelines, or RAG preproc
 
 ## Installation
 
-**Requirements: Python 3.12 or higher**
+**Requirements: Python 3.10 or higher**
 
 ---
 
@@ -139,10 +139,13 @@ docubridge parse colleague-report.docx -o colleague-report.md
 ### The "AI wrote my draft, now I need a real Word doc" workflow
 
 ```bash
-# Option 1: Use a built-in style
-docubridge render ai-draft.md -o final-report.docx --style academic
+# Option 1: Use the built-in default style
+docubridge render ai-draft.md -o final-report.docx --style default
 
-# Option 2: Extract styles from your company's template
+# Option 2: Use a built-in style with a template
+docubridge render ai-draft.md -o final-report.docx --style academic --template company-template.docx
+
+# Option 3: Extract styles from your company's template
 docubridge extract-styles company-template.docx -o company-style.yaml
 docubridge render ai-draft.md -o final-report.docx --style company-style.yaml --template company-template.docx
 ```
@@ -174,6 +177,8 @@ docubridge parse spreadsheet.xlsx -o output.md
 docubridge parse slides.pptx -o output.md
 ```
 
+Run `docubridge parse --help` for more options and examples.
+
 **What it extracts:**
 
 - 📑 **Headings** — `Heading 1` becomes `#`, `Heading 2` becomes `##`, etc.
@@ -188,6 +193,25 @@ docubridge parse slides.pptx -o output.md
 ```bash
 docubridge parse document.docx -o output.md --json
 ```
+
+---
+
+### 🎨 `extract-styles` — Extract Styles From Any Word Document
+
+Turn an existing `.docx` into a reusable YAML style profile:
+
+```bash
+docubridge extract-styles company-template.docx -o company-style.yaml
+docubridge extract-styles company-template.docx -o company-style.yaml --pretty
+```
+
+Use it together with the original template:
+
+```bash
+docubridge render draft.md -o final.docx --style company-style.yaml --template company-template.docx
+```
+
+Run `docubridge extract-styles --help` for all flags.
 
 ---
 
@@ -251,7 +275,8 @@ Result: A properly styled heading in your company's brand.
 **Method 1: Built-in Styles (Simplest)**
 
 ```bash
-docubridge render draft.md -o output.docx --style academic
+# Use the general-purpose default style (Chinese SimSun + English Times New Roman, single spacing, no indent)
+docubridge render draft.md -o output.docx --style default
 ```
 
 Available built-in styles: `academic`, `business`, `default`
@@ -274,17 +299,22 @@ Great for: Portable configurations, sharing styles across machines.
 
 ```yaml
 defaults:
-  font_name: Times New Roman
+  font_ascii: Times New Roman
+  font_east_asia: 宋体
   font_size: 12
+  line_spacing: 1.0
 
 elements:
   heading1:
     template_style: Heading 1
     font_size: 18
     bold: true
+    line_spacing: 1.0
   paragraph:
     template_style: Normal
     font_size: 12
+    line_spacing: 1.0
+    first_line_indent_pt: 0
 ```
 
 ---
@@ -325,38 +355,6 @@ heading1:
 ```
 
 Even if the template's `Heading 1` has font_size = 16, the output will use 14 because YAML takes priority.
-
----
-
-#### 🎨 `extract-styles` — Your Secret Weapon ⭐
-
-This is the new hotness. **Extract styles from any Word document and reuse them.**
-
-Got a Word template with your company's perfect formatting? Use it as a style source:
-
-```bash
-# Extract styles from your company's template
-docubridge extract-styles company-template.docx -o company-style.yaml
-
-# Now use it to render any Markdown with company branding
-docubridge render ai-draft.md -o company-doc.docx --style company-style.yaml --template company-template.docx
-```
-
-**What it does:**
-
-- Scans Word styles (Heading 1, Normal, List Number, etc.)
-- Maps them to Markdown elements automatically
-- Handles Chinese Office styles (`标题 1` → `heading1`, `正文` → `paragraph`)
-- Saves unmapped styles to `compat.extracted_styles` for manual review
-- Generates a YAML file you can tweak and reuse
-
-**Flags:**
-
-| Flag | What it does |
-|------|--------------|
-| `--pretty` | Output human-readable YAML with indentation |
-| `--strict` | Fail if any Word style can't be mapped (for perfectionists) |
-| `--json` | Get structured JSON output instead of text |
 
 ---
 
@@ -427,11 +425,11 @@ Start with these in order:
 
 Built-in styles included:
 
-| Style | Best For |
-|-------|----------|
-| `academic` | Research papers, theses |
-| `business` | Reports, memos, proposals |
-| `default` | General purpose (Chinese-friendly defaults) |
+| Style | Best For | Defaults |
+|-------|----------|----------|
+| `default` | General purpose | Chinese `宋体`, English `Times New Roman`, single spacing, no indent |
+| `academic` | Research papers, theses | Same font defaults |
+| `business` | Reports, memos, proposals | Same font defaults, 11 pt |
 
 **Commands:**
 
@@ -440,7 +438,7 @@ Built-in styles included:
 docubridge style list
 
 # Show a style's YAML
-docubridge style show academic
+docubridge style show default
 
 # Validate your custom style file
 docubridge style validate my-style.yaml
@@ -452,6 +450,8 @@ docubridge style explain my-style.yaml heading1 --template template.docx
 docubridge style merge my-style.yaml --set document.toc.depth=4
 ```
 
+Run `docubridge style --help` for a list of subcommands.
+
 ---
 
 ### 🔍 `doctor` — Pre-flight Check
@@ -459,7 +459,9 @@ docubridge style merge my-style.yaml --set document.toc.depth=4
 Before rendering an important document, run the diagnostic:
 
 ```bash
-docubridge doctor draft.md --style academic --template template.docx
+docubridge doctor
+docubridge doctor draft.md --style default
+docubridge doctor draft.md --style company-style.yaml --template template.docx
 ```
 
 This checks:
@@ -469,6 +471,8 @@ This checks:
 - ✅ Style file is valid
 - ✅ Styles resolve correctly
 - ✅ Template numbering resources are available
+
+Run `docubridge doctor --help` for more examples.
 
 ---
 
@@ -528,7 +532,7 @@ The core `.docx ↔ Markdown` bridge is solid and production-ready.
 ## Technical Details
 
 **Built with:**
-- Python 3.12+
+- Python 3.10+
 - `python-docx` for Word manipulation
 - `openpyxl` for Excel parsing
 - `python-pptx` for PowerPoint parsing
@@ -560,3 +564,20 @@ Additional guides:
 **Made for people who work with AI and still have to deliver Word documents.**
 
 *Because life's too short to manually format footnotes.*
+
+---
+
+## Release Notes (0.3.1)
+
+- Fixed CLI `--help` so usage examples reliably appear in both wheel and sdist installs.
+
+## Release Notes (0.3.0)
+
+- Added `docubridge extract-styles` to turn any `.docx` into a reusable YAML style profile.
+- Added built-in `default` style with Chinese `宋体`, English `Times New Roman`, single line spacing and no first-line indent.
+- Added `line_spacing` / `line_spacing_pt` support in style profiles and rendering.
+- Added `docubridge --version` / `-v` flag.
+- Fixed run-level font size, bold and italic application.
+- Fixed heading color fidelity when using `--template`.
+- Improved CLI `--help` descriptions and examples for every command.
+- Published both sdist and wheel release artifacts.

@@ -1,1 +1,3 @@
-__version__ = "0.1.0"
+"""docubridge: bidirectional Markdown <-> Office document toolkit."""
+
+__version__ = "0.3.1"

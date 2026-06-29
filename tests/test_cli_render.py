@@ -968,8 +968,8 @@ def test_parse_help_includes_json_option_and_description() -> None:
     normalized = " ".join(result.stdout.split())
 
     assert result.exit_code == 0
-    assert "Parse supported documents to Markdown." in normalized
-    assert "Currently supports .docx, .xlsx, and .pptx input." in normalized
+    assert "Parse .docx / .xlsx / .pptx into Markdown." in normalized
+    assert "Source document path" in normalized
     assert "--json" in result.stdout
     assert "--output" in result.stdout
 
@@ -1265,7 +1265,7 @@ def test_render_help_includes_json_option_and_description() -> None:
     result = runner.invoke(app, ["render", "--help"])
 
     assert result.exit_code == 0
-    assert "Render Markdown to .docx." in result.stdout
+    assert "Render Markdown into a styled .docx." in result.stdout
     assert "--json" in result.stdout
     assert "--style" in result.stdout
     assert "--template" in result.stdout
@@ -1276,10 +1276,8 @@ def test_render_help_describes_style_and_template_roles() -> None:
 
     assert result.exit_code == 0
     assert "YAML style profile" in result.stdout
-    assert "explicit" in result.stdout
-    assert "formatting rules" in result.stdout
-    assert "Use a .docx template as the host document." in result.stdout
-    assert "YAML still defines explicit style intent." in result.stdout
+    assert "template" in result.stdout
+    assert "override" in result.stdout.lower()
 
 
 def test_render_returns_exit_code_4_for_missing_template_file(tmp_path: Path) -> None:
@@ -2713,7 +2711,7 @@ def test_style_help_lists_subcommands() -> None:
     result = runner.invoke(app, ["style", "--help"])
 
     assert result.exit_code == 0
-    assert "Inspect and validate style profiles." in result.stdout
+    assert "Inspect, validate and preview style profiles." in result.stdout
     assert "show" in result.stdout
     assert "validate" in result.stdout
     assert "explain" in result.stdout

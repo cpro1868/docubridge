@@ -18,10 +18,33 @@ from docubridge.core.style_schema import load_style_profile
 from docubridge.core.template_bridge import TemplateView, load_template_view
 
 
-app = typer.Typer(no_args_is_help=True)
+from docubridge import __version__
+
+
+def _version_callback(value: bool) -> None:
+    if value:
+        typer.echo(f"docubridge {__version__}")
+        raise typer.Exit()
+
+
+app = typer.Typer(
+    no_args_is_help=True,
+    rich_markup_mode="rich",
+    help="""docubridge: bidirectional Markdown <-> Office document toolkit.
+
+Examples:
+  docubridge render draft.md -o out.docx --style default
+  docubridge render draft.md -o out.docx --style style.yaml --template corp.docx
+  docubridge parse report.docx -o report.md
+  docubridge extract-styles corp.docx -o corp-style.yaml
+  docubridge doctor draft.md --style style.yaml --template corp.docx
+""",
+    add_completion=False,
+)
 style_app = typer.Typer(
     no_args_is_help=True,
-    help="Inspect and validate style profiles.",
+    rich_markup_mode="rich",
+    help="Inspect, validate and preview style profiles.",
 )
 
 app.add_typer(style_app, name="style")
@@ -48,6 +71,21 @@ def _emit_doctor_json(
 
 def _display_path(path: Path) -> str:
     return path.as_posix()
+
+
+@app.callback()
+def _main(
+    version: bool = typer.Option(
+        False,
+        "--version",
+        "-v",
+        help="Show the version and exit.",
+        callback=_version_callback,
+        is_eager=True,
+    ),
+) -> None:
+    """Common entry-point options."""
+    pass
 
 
 def _emit_render_json(*, success: bool, output_path: Path, diagnostics: list[dict]) -> None:
@@ -141,13 +179,19 @@ def _parse_override_args(values: list[str] | None) -> dict[str, str]:
     return overrides
 
 
-@app.command()
+@app.command(help="""Parse .docx / .xlsx / .pptx into Markdown.
+
+Examples:
+  docubridge parse report.docx -o report.md
+  docubridge parse slides.pptx -o slides.md
+  docubridge parse data.xlsx -o sheet.md --json
+""")
 def parse(
-    input_path: Path,
+    input_path: Path = typer.Argument(..., help="Source document path (.docx, .xlsx or .pptx)."),
     output_path: Path = typer.Option(..., "-o", "--output", help="Write Markdown output to this path."),
     json_output: bool = typer.Option(False, "--json", help="Emit a structured JSON result instead of text."),
 ) -> None:
-    """Parse supported documents to Markdown. Currently supports .docx, .xlsx, and .pptx input."""
+    """Convert .docx / .xlsx / .pptx files to Markdown. Images and other assets are exported to an 'assets/' folder next to the output file."""
     result = run_parse(input_path, output_path)
     if json_output:
         _emit_parse_json(
@@ -162,23 +206,30 @@ def parse(
         raise typer.Exit(code=5)
 
 
-@app.command()
+@app.command(help="""Render Markdown into a styled .docx.
+
+Examples:
+  docubridge render input.md -o out.docx --style style.yaml
+  docubridge render input.md -o out.docx --style default
+  docubridge render input.md -o out.docx --style style.yaml --template corp.docx
+  docubridge render input.md -o out.docx --style $(docubridge style show default --path)
+""")
 def render(
-    input_path: Path,
-    output_path: Path = typer.Option(..., "-o", "--output"),
+    input_path: Path = typer.Argument(..., help="Markdown source file."),
+    output_path: Path = typer.Option(..., "-o", "--output", help="Write the resulting .docx to this path."),
     style_path: Path = typer.Option(
         ...,
         "--style",
-        help="Use a YAML style profile for explicit formatting rules.",
+        help="YAML style profile (builtin names like 'default' are accepted and resolved automatically).",
     ),
     template_path: Path | None = typer.Option(
         None,
         "--template",
-        help="Use a .docx template as the host document. YAML still defines explicit style intent.",
+        help="Optional .docx template used as the host document. YAML values override template values.",
     ),
-    json_output: bool = typer.Option(False, "--json"),
+    json_output: bool = typer.Option(False, "--json", help="Emit structured JSON result instead of text."),
 ) -> None:
-    """Render Markdown to .docx."""
+    """Render Markdown to a styled .docx."""
     request = RenderRequest(
         input_path=input_path,
         output_path=output_path,
@@ -202,10 +253,19 @@ def render(
         raise typer.Exit(code=5)
 
 
-@app.command()
+@app.command(help="""Extract Word styles from a .docx into a YAML profile.
+
+Examples:
+  docubridge extract-styles contract.docx -o contract-style.yaml
+  docubridge extract-styles contract.docx -o contract-style.yaml --pretty
+  docubridge extract-styles contract.docx -o contract-style.yaml --strict
+
+The generated YAML can be passed to 'render --style'.
+Unmapped styles are kept under 'compat.extracted_styles' unless --strict is used.
+""")
 def extract_styles(
-    input_path: Path,
-    output_path: Path = typer.Option(..., "-o", "--output"),
+    input_path: Path = typer.Argument(..., help="Source .docx to extract styles from."),
+    output_path: Path = typer.Option(..., "-o", "--output", help="Write the extracted style YAML to this path."),
     pretty: bool = typer.Option(False, "--pretty", help="Write indented, human-readable YAML."),
     strict: bool = typer.Option(False, "--strict", help="Fail if any Word style cannot be mapped to a known element."),
     json_output: bool = typer.Option(False, "--json", help="Emit a structured JSON result instead of text."),
@@ -258,17 +318,28 @@ def extract_styles(
     typer.echo(f"Extracted styles written to {_display_path(output_path)}")
 
 
-@style_app.command("list")
+@style_app.command("list", help="""List built-in style profile names.
+
+Examples:
+  docubridge style list
+""")
 def style_list() -> None:
+    """List built-in style profile names."""
     for name in _builtin_style_names():
         typer.echo(name)
 
 
-@style_app.command("show")
+@style_app.command("show", help="""Print a built-in style profile.
+
+Examples:
+  docubridge style show default
+  docubridge style show academic --json
+""")
 def style_show(
-    name: str,
-    json_output: bool = typer.Option(False, "--json"),
+    name: str = typer.Argument(..., help="Built-in profile name (e.g. default, academic, business)."),
+    json_output: bool = typer.Option(False, "--json", help="Output structured JSON instead of raw YAML."),
 ) -> None:
+    """Print a built-in style profile to stdout."""
     path = _builtin_style_path(name)
     content = path.read_text(encoding="utf-8")
     if json_output:
@@ -283,11 +354,17 @@ def style_show(
     typer.echo(content)
 
 
-@style_app.command("validate")
+@style_app.command("validate", help="""Validate a style profile YAML file.
+
+Examples:
+  docubridge style validate style.yaml
+  docubridge style validate style.yaml --json
+""")
 def style_validate(
-    style_path: Path,
-    json_output: bool = typer.Option(False, "--json"),
+    style_path: Path = typer.Argument(..., help="Path to the YAML style profile to validate."),
+    json_output: bool = typer.Option(False, "--json", help="Output structured JSON instead of text."),
 ) -> None:
+    """Validate a style profile YAML file."""
     try:
         load_style_profile(style_path)
     except (FileNotFoundError, OSError, TypeError, ValueError, KeyError) as exc:
@@ -314,17 +391,24 @@ def style_validate(
     typer.echo("Style OK")
 
 
-@style_app.command("explain")
+@style_app.command("explain", help="""Show the resolved style for a single element.
+
+Examples:
+  docubridge style explain style.yaml heading1
+  docubridge style explain style.yaml paragraph --pretty
+  docubridge style explain style.yaml ordered_list --template corp.docx --pretty
+""")
 def style_explain(
-    style_path: Path,
-    element_name: str,
+    style_path: Path = typer.Argument(..., help="Path to the YAML style profile."),
+    element_name: str = typer.Argument(..., help="Element to inspect (e.g. heading1, paragraph, ordered_list)."),
     template_path: Path | None = typer.Option(
         None,
         "--template",
         help="Resolve styles against a .docx template when inspecting template-backed profiles.",
     ),
-    pretty: bool = typer.Option(False, "--pretty"),
+    pretty: bool = typer.Option(False, "--pretty", help="Pretty-print the JSON output."),
 ) -> None:
+    """Show the resolved style for a single element. Use --template to see how the profile interacts with a host Word file."""
     try:
         profile = load_style_profile(style_path)
         template = load_template_view(template_path)
@@ -350,12 +434,19 @@ def style_explain(
     _emit_json(payload, pretty=pretty)
 
 
-@style_app.command("merge")
+@style_app.command("merge", help="""Merge a style profile with optional overrides and print it.
+
+Examples:
+  docubridge style merge style.yaml --pretty
+  docubridge style merge style.yaml --set heading1.font_size=20 --pretty
+  docubridge style merge style.yaml --set document.toc.depth=4 --pretty
+""")
 def style_merge(
-    style_path: Path,
-    overrides: list[str] = typer.Option(None, "--set"),
-    pretty: bool = typer.Option(False, "--pretty"),
+    style_path: Path = typer.Argument(..., help="Path to the YAML style profile."),
+    overrides: list[str] = typer.Option(None, "--set", help="Override values using dot-path notation, e.g. --set heading1.font_size=20"),
+    pretty: bool = typer.Option(False, "--pretty", help="Pretty-print the JSON output."),
 ) -> None:
+    """Merge a style profile with optional overrides and print the result."""
     try:
         profile = load_style_profile(style_path, _parse_override_args(overrides))
     except (FileNotFoundError, OSError, TypeError, ValueError, KeyError) as exc:
@@ -365,16 +456,22 @@ def style_merge(
     _emit_json(profile.model_dump(mode="python"), pretty=pretty)
 
 
-@app.command()
+@app.command(help="""Run environment and task-level preflight checks.
+
+Examples:
+  docubridge doctor
+  docubridge doctor input.md --style style.yaml
+  docubridge doctor input.md --style style.yaml --template corp.docx
+""")
 def doctor(
-    input_path: Path | None = typer.Argument(None),
-    style: Path | None = typer.Option(None, "--style"),
+    input_path: Path | None = typer.Argument(None, help="Optional Markdown source file to validate."),
+    style: Path | None = typer.Option(None, "--style", help="Optional YAML style profile to validate against."),
     template: Path | None = typer.Option(
         None,
         "--template",
         help="Resolve styles against a .docx template when validating render readiness.",
     ),
-    json_output: bool = typer.Option(False, "--json"),
+    json_output: bool = typer.Option(False, "--json", help="Emit structured JSON result instead of text."),
 ) -> None:
     """Run environment and task-level preflight checks."""
     checks: list[dict[str, str]] = [{"name": "environment", "status": "ok"}]

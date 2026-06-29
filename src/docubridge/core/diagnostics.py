@@ -1,8 +1,8 @@
 from dataclasses import dataclass
-from enum import StrEnum
+from enum import Enum
 
 
-class Severity(StrEnum):
+class Severity(str, Enum):
     INFO = "info"
     WARNING = "warning"
     ERROR = "error"

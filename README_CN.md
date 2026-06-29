@@ -49,7 +49,7 @@
 
 ## 安装
 
-**要求：Python 3.12 或更高版本**
+**要求：Python 3.10 或更高版本**
 
 ---
 
@@ -143,10 +143,13 @@ docubridge parse 同事的报告.docx -o 同事的报告.md
 ### 场景："AI 写完草稿了，我需要一份正经的 Word"
 
 ```bash
-# 方式一：使用内置样式
-docubridge render AI草稿.md -o 最终报告.docx --style academic
+# 方式一：使用默认内置样式
+docubridge render AI草稿.md -o 最终报告.docx --style default
 
-# 方式二：从公司模板提取样式（推荐！）
+# 方式二：使用内置样式 + 公司模板
+docubridge render AI草稿.md -o 最终报告.docx --style academic --template 公司模板.docx
+
+# 方式三：从公司模板提取样式（推荐！）
 docubridge extract-styles 公司模板.docx -o 公司样式.yaml
 docubridge render AI草稿.md -o 最终报告.docx --style 公司样式.yaml --template 公司模板.docx
 ```
@@ -177,6 +180,8 @@ docubridge parse 文档.docx -o 输出.md
 docubridge parse 表格.xlsx -o 输出.md
 docubridge parse 幻灯片.pptx -o 输出.md
 ```
+
+运行 `docubridge parse --help` 查看更多选项和示例。
 
 **它会提取这些内容：**
 
@@ -255,10 +260,11 @@ Template 提供实际的 `Heading 1` 样式（你公司的字体、颜色、间�
 **方式一：内置样式（最简单）**
 
 ```bash
-docubridge render 草稿.md -o 输出.docx --style academic
+# 通用默认样式：中文宋体、英文 Times New Roman、单倍行距、无首行缩进
+docubridge render 草稿.md -o 输出.docx --style default
 ```
 
-内置样式：`academic`（学术）、`business`（商务）、`default`（默认）
+内置样式：`default`（默认，中文友好）、`academic`（学术）、`business`（商务）
 
 适用场景：快速出结果、测试、简单文档。
 
@@ -278,17 +284,22 @@ docubridge render 草稿.md -o 输出.docx --style 我的样式.yaml
 
 ```yaml
 defaults:
-  font_name: Times New Roman
+  font_ascii: Times New Roman
+  font_east_asia: 宋体
   font_size: 12
+  line_spacing: 1.0
 
 elements:
   heading1:
     template_style: Heading 1
     font_size: 18
     bold: true
+    line_spacing: 1.0
   paragraph:
     template_style: Normal
     font_size: 12
+    line_spacing: 1.0
+    first_line_indent_pt: 0
 ```
 
 ---
@@ -349,6 +360,30 @@ heading1:
 
 ---
 
+#### 从 Word 模板提取样式
+
+如果你已有现成的 Word 模板，可以把它转成 YAML 样式文件复用：
+
+```bash
+# 提取为 YAML
+docubridge extract-styles 公司模板.docx -o 公司样式.yaml
+
+# 常用参数
+--pretty    # 输出带缩进的人类可读 YAML
+--strict    # 有无法映射的样式时直接报错
+--json      # 输出 JSON 结果
+```
+
+配合原模板一起渲染：
+
+```bash
+docubridge render 草稿.md -o 最终版.docx --style 公司样式.yaml --template 公司模板.docx
+```
+
+运行 `docubridge extract-styles --help` 查看所有参数。
+
+---
+
 #### 推荐的渲染工作流
 
 按照这个顺序执行，效果最好：
@@ -397,38 +432,6 @@ docubridge render 草稿.md -o 最终版.docx --style 公司样式.yaml --templa
 | `quote` | `> 引用` | `template_style` |
 | `table` | Markdown 表格 | `template_style` |
 | `code_block` | 代码块 | `template_style` |
-
----
-
-#### 🎨 `extract-styles` — 你的秘密武器 ⭐
-
-这是新加入的王炸功能。**从任意 Word 文档提取样式并复用。**
-
-假设你有一份公司模板，里面有你公司标志性的完美格式：
-
-```bash
-# 从公司模板提取样式
-docubridge extract-styles 公司模板.docx -o 公司样式.yaml
-
-# 现在可以用公司风格渲染任何 Markdown
-docubridge render AI草稿.md -o 公司正式文件.docx --style 公司样式.yaml --template 公司模板.docx
-```
-
-**它是怎么工作的：**
-
-- 扫描 Word 样式（Heading 1、Normal、List Number 等）
-- 自动映射到 Markdown 元素
-- 支持中文 Office 样式（`标题 1` → `heading1`，`正文` → `paragraph`）
-- 无法识别的样式保存到 `compat.extracted_styles`，供人工检查
-- 生成一个 YAML 文件，你可以继续调整和复用
-
-**常用参数：**
-
-| 参数 | 作用 |
-|------|------|
-| `--pretty` | 输出人类可读的 YAML（有缩进的那种） |
-| `--strict` | 如果有任何 Word 样式无法映射，直接报错（给完美主义者用） |
-| `--json` | 返回结构化的 JSON 而不是纯文本 |
 
 ---
 
@@ -491,11 +494,11 @@ A: 可以！这是推荐的工作流：
 
 内置了三个样式：
 
-| 样式名 | 适用场景 |
-|--------|----------|
-| `academic` | 学术论文、毕业论文 |
-| `business` | 报告、备忘录、方案书 |
-| `default` | 通用（中文友好默认设置） |
+| 样式名 | 适用场景 | 默认设置 |
+|--------|----------|----------|
+| `default` | 通用 | 中文 `宋体`、英文 `Times New Roman`、单倍行距、无首行缩进 |
+| `academic` | 学术论文、毕业论文 | 同上 |
+| `business` | 报告、备忘录、方案书 | 同上，11 pt 字号 |
 
 **常用命令：**
 
@@ -504,7 +507,7 @@ A: 可以！这是推荐的工作流：
 docubridge style list
 
 # 查看某个样式的 YAML
-docubridge style show academic
+docubridge style show default
 
 # 验证你的自定义样式文件
 docubridge style validate 我的样式.yaml
@@ -516,6 +519,8 @@ docubridge style explain 我的样式.yaml heading1 --template 模板.docx
 docubridge style merge 我的样式.yaml --set document.toc.depth=4
 ```
 
+运行 `docubridge style --help` 查看子命令列表。
+
 ---
 
 ### 🔍 `doctor` — 渲染前的体检
@@ -523,7 +528,9 @@ docubridge style merge 我的样式.yaml --set document.toc.depth=4
 在渲染重要文档之前，先跑一遍诊断：
 
 ```bash
-docubridge doctor 草稿.md --style academic --template 模板.docx
+docubridge doctor
+docubridge doctor 草稿.md --style default
+docubridge doctor 草稿.md --style 公司样式.yaml --template 模板.docx
 ```
 
 它会检查：
@@ -593,7 +600,7 @@ IT部门：     "这是我们的新 Word 模板，所有正式文档必须用这
 
 **用到的技术：**
 
-- Python 3.12+
+- Python 3.10+
 - `python-docx` — Word 操作
 - `openpyxl` — Excel 解析
 - `python-pptx` — PowerPoint 解析
@@ -623,3 +630,20 @@ IT部门：     "这是我们的新 Word 模板，所有正式文档必须用这
 **为那些用 AI 写东西、但最后还是得交 Word 文档的人而造。**
 
 *生活太短，不值得手动调脚注格式。*
+
+---
+
+## 更新日志（0.3.1）
+
+- 修复 CLI `--help`，确保 wheel 和 sdist 安装后都能显示使用示例。
+
+## 更新日志（0.3.0）
+
+- 新增 `docubridge extract-styles` 命令，可从任意 `.docx` 提取样式为 YAML profile。
+- 新增内置 `default` 样式：中文 `宋体`、英文 `Times New Roman`、单倍行距、无首行缩进。
+- 样式配置支持 `line_spacing` / `line_spacing_pt` 行距属性。
+- 新增 `docubridge --version` / `-v` 版本查看参数。
+- 修复渲染时字号、加粗、斜体未正确写入 Word 的问题。
+- 修复使用 `--template` 时标题颜色偏离原稿的问题。
+- 为每个 CLI 命令的 `--help` 增加更详细的说明和示例。
+- 发布时同时提供源码包（sdist）和 wheel。
